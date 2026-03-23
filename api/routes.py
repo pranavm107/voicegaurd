@@ -7,7 +7,8 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
+from fastapi.responses import Response
 from loguru import logger
 
 from ml.detector import run_detection, get_pipeline
@@ -94,3 +95,13 @@ async def analyze_audio(file: UploadFile = File(...)):
         raise HTTPException(500, f"Analysis failed: {str(e)}")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+@router.post("/whatsapp", include_in_schema=False)
+async def whatsapp_webhook(request: Request):
+    """Twilio WhatsApp webhook endpoint."""
+    from bot.whatsapp import handle_whatsapp_webhook
+    form_data = await request.form()
+    form_dict = dict(form_data)
+    twiml = await handle_whatsapp_webhook(form_dict)
+    return Response(content=twiml, media_type="application/xml")
