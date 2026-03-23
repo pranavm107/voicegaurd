@@ -17,7 +17,7 @@ from api.models import AnalysisResponse, HealthResponse
 
 router = APIRouter()
 
-ALLOWED_EXTENSIONS = {".wav", ".mp3", ".ogg", ".m4a", ".flac"}
+ALLOWED_EXTENSIONS = {".wav", ".mp3", ".ogg", ".m4a", ".flac", ".webm"}
 
 
 def convert_to_wav(input_path: str, output_path: str) -> None:

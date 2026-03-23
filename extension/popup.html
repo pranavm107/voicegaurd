@@ -1,5 +1,172 @@
 <!DOCTYPE html>
 <html>
-<head><title>VoiceGuard</title></head>
-<body><h1>VoiceGuard</h1></body>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+    body { width: 300px; background: #0f0f0f; color: #fff; padding: 18px; }
+
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .logo { width: 34px; height: 34px; background: #7F77DD; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px; color: white; flex-shrink: 0; }
+    .title { font-size: 15px; font-weight: 600; color: #fff; }
+    .subtitle { font-size: 11px; color: #666; margin-top: 2px; }
+
+    .status-bar { background: #1a1a1a; border-radius: 8px; padding: 10px 12px;
+                  margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; flex-shrink: 0; }
+    .status-dot.ready { background: #639922; }
+    .status-dot.listening { background: #E24B4A; animation: pulse 1s infinite; }
+    .status-dot.analyzing { background: #BA7517; animation: pulse .6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .status-text { font-size: 12px; color: #888; }
+
+    .duration-row { display: flex; align-items: center; gap: 8px; 
+                    margin-bottom: 14px; }
+    .duration-label { font-size: 12px; color: #666; }
+    .duration-btns { display: flex; gap: 6px; }
+    .dur-btn { padding: 4px 10px; border-radius: 20px; border: 1px solid #333;
+               background: transparent; color: #888; font-size: 11px; cursor: pointer; }
+    .dur-btn.active { border-color: #7F77DD; color: #7F77DD; background: #7F77DD18; }
+
+    .listen-btn { width: 100%; padding: 13px; border: none; border-radius: 10px;
+                  font-size: 14px; font-weight: 600; cursor: pointer;
+                  transition: all .2s; display: flex; align-items: center;
+                  justify-content: center; gap: 8px; }
+    .listen-btn.idle { background: #7F77DD; color: white; }
+    .listen-btn.idle:hover { background: #534AB7; }
+    .listen-btn.recording { background: #E24B4A; color: white; }
+    .listen-btn.recording:hover { background: #A32D2D; }
+    .listen-btn:disabled { background: #222; color: #444; cursor: not-allowed; }
+
+    .mic-icon { width: 16px; height: 16px; }
+
+    .progress-bar { height: 3px; background: #1a1a1a; border-radius: 2px;
+                    margin-top: 10px; overflow: hidden; display: none; }
+    .progress-fill { height: 100%; background: #7F77DD; border-radius: 2px;
+                     transition: width .1s linear; width: 0%; }
+
+    .result { display: none; margin-top: 14px; border-radius: 10px; padding: 14px; }
+    .result.fake { background: #1a0505; border: 1px solid #E24B4A55; }
+    .result.real { background: #051a05; border: 1px solid #63992255; }
+    .result.inconclusive { background: #1a1200; border: 1px solid #BA751755; }
+
+    .verdict-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .verdict-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
+    .verdict-value { font-size: 24px; font-weight: 700; }
+    .verdict-value.fake { color: #E24B4A; }
+    .verdict-value.real { color: #639922; }
+    .verdict-value.inconclusive { color: #BA7517; }
+    .confidence-circle { text-align: right; }
+    .conf-num { font-size: 28px; font-weight: 700; }
+    .conf-num.fake { color: #E24B4A; }
+    .conf-num.real { color: #639922; }
+    .conf-num.inconclusive { color: #BA7517; }
+    .conf-label { font-size: 10px; color: #666; }
+
+    .risk-pill { display: inline-block; padding: 3px 10px; border-radius: 20px;
+                 font-size: 11px; font-weight: 600; margin-bottom: 10px; }
+    .risk-HIGH { background: #E24B4A22; color: #E24B4A; }
+    .risk-MEDIUM { background: #BA751722; color: #BA7517; }
+    .risk-LOW { background: #63992222; color: #639922; }
+    .risk-UNKNOWN { background: #88888822; color: #888; }
+
+    .artifacts-title { font-size: 10px; color: #555; text-transform: uppercase;
+                       letter-spacing: .08em; margin-bottom: 6px; }
+    .artifact { font-size: 11px; color: #aaa; padding: 4px 0;
+                border-bottom: 1px solid #ffffff08; display: flex; gap: 6px; }
+    .artifact:last-child { border-bottom: none; }
+    .artifact-arrow { color: #7F77DD; flex-shrink: 0; }
+
+    .badge-btn { width: 100%; margin-top: 10px; padding: 7px; background: transparent;
+                 border: 1px solid #2a2a2a; border-radius: 6px; color: #666;
+                 font-size: 11px; cursor: pointer; transition: all .2s; }
+    .badge-btn:hover { border-color: #7F77DD; color: #7F77DD; }
+
+    .error { background: #1a0505; border: 1px solid #E24B4A44; border-radius: 8px;
+             padding: 10px 12px; margin-top: 12px; font-size: 11px;
+             color: #E24B4A; display: none; line-height: 1.5; }
+
+    .wave { display: none; justify-content: center; align-items: center;
+            gap: 3px; height: 30px; margin-top: 10px; }
+    .wave-bar { width: 3px; background: #E24B4A; border-radius: 2px;
+                animation: wave-anim .6s ease-in-out infinite; }
+    .wave-bar:nth-child(2) { animation-delay: .1s; }
+    .wave-bar:nth-child(3) { animation-delay: .2s; }
+    .wave-bar:nth-child(4) { animation-delay: .3s; }
+    .wave-bar:nth-child(5) { animation-delay: .2s; }
+    .wave-bar:nth-child(6) { animation-delay: .1s; }
+    @keyframes wave-anim {
+      0%,100% { height: 6px; } 50% { height: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">VG</div>
+    <div>
+      <div class="title">VoiceGuard AI</div>
+      <div class="subtitle">Deepfake voice detector</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot ready" id="statusDot"></div>
+    <div class="status-text" id="statusText">Ready to listen</div>
+  </div>
+
+  <div class="duration-row">
+    <span class="duration-label">Listen for:</span>
+    <div class="duration-btns">
+      <button class="dur-btn active" data-sec="10">10s</button>
+      <button class="dur-btn" data-sec="15">15s</button>
+      <button class="dur-btn" data-sec="20">20s</button>
+    </div>
+  </div>
+
+  <button class="listen-btn idle" id="listenBtn">
+    <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="23"/>
+      <line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+    <span id="btnText">Listen Now</span>
+  </button>
+
+  <div class="wave" id="wave">
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+  </div>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="verdict-row">
+      <div>
+        <div class="verdict-label">Verdict</div>
+        <div class="verdict-value" id="verdictValue"></div>
+      </div>
+      <div class="confidence-circle">
+        <div class="conf-num" id="confNum"></div>
+        <div class="conf-label">confidence</div>
+      </div>
+    </div>
+    <div id="riskPill" class="risk-pill"></div>
+    <div class="artifacts-title">Detected Artifacts</div>
+    <div id="artifactsList"></div>
+    <button class="badge-btn" id="badgeBtn">Show alert badge on this page</button>
+  </div>
+
+  <div class="error" id="errorBox"></div>
+
+  <script src="popup.js"></script>
+</body>
 </html>
