@@ -1,0 +1,18 @@
+# VoiceGuard AI Requirements
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+transformers>=4.35.2
+torch>=2.6.0
+torchaudio>=2.6.0
+librosa>=0.11.0
+numpy>=2.1.0
+numba>=0.61.0
+twilio==8.10.0
+python-dotenv==1.0.0
+reportlab==4.0.7
+streamlit>=1.39.0
+loguru==0.7.2
+httpx==0.25.2
+soundfile==0.12.1
+ffmpeg-python==0.2.0

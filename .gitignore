@@ -1,0 +1,10 @@
+.env
+model_cache/
+test_audio/
+__pycache__/
+*.pyc
+.DS_Store
+*.pdf
+node_modules/
+.ipynb_checkpoints/
+venv/
